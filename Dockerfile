@@ -3,6 +3,6 @@ MAINTAINER Michael Barton, mail@michaelbarton.me.uk
 
 RUN apt-get update -y
 RUN apt-get install -y soapdenovo2
-ADD run run
+ADD run /usr/local/bin/
 
-ENTRYPOINT ["./run"]
+ENTRYPOINT ["/usr/local/bin/run"]

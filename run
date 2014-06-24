@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -o errexit
+set -o xtrace
+set -o nounset
+
+# The first argument is the location of the reads in the container filesystem.
+# The will be present in a read-only directory
+READS=$1
+
+# The second argument is a directory with write-access where the final
+# assembly should be written to.
+DIR=$2
+LOG=$DIR/log.txt
+
+# The assembly should be written to the file "contigs.fa" in the output directory
+ASSEMBLY=$DIR/contigs.fa
+
+TMP_DIR=`mktemp -d`
+
+gunzip --to-stdout $READS > ${TMP_DIR}/reads.fq
+
+cat << EOF > $TMP_DIR/config
+max_rd_len=400
+[LIB]
+#average insert size
+avg_ins=270
+#if sequence needs to be reversed
+reverse_seq=0
+#in which part(s) the reads are used
+asm_flags=3
+#in which order the reads are used while scaffolding
+rank=1
+# Use non-interleaved fastq
+# I get segmentation faults if I use the p option
+q=${TMP_DIR}/reads.fq
+EOF
+
+CPU=1
+
+cd $TMP_DIR
+
+soapdenovo2-127mer all -p $CPU -o genome -s config 2> $LOG 1>&2
+
+mv genome.scafSeq $ASSEMBLY

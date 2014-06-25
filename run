@@ -40,6 +40,9 @@ CPU=1
 
 cd $TMP_DIR
 
-soapdenovo2-127mer all -p $CPU -o genome -s config 2> $LOG 1>&2
+KMER_CUT_OFF=10
+
+soapdenovo2-127mer all -p $CPU -d ${KMER_CUT_OFF} -o genome -s config 2> $LOG 1>&2
+
 
 mv genome.scafSeq $ASSEMBLY

@@ -4,23 +4,23 @@ set -o errexit
 set -o xtrace
 set -o nounset
 
-# The first argument is the location of the reads in the container filesystem.
-# The will be present in a read-only directory
-READS=$1
+# Source reads
+READS=$2
 
-# The second argument is a directory with write-access where the final
-# assembly should be written to.
-DIR=$2
-LOG=$DIR/log.txt
-
-# The assembly should be written to the file "contigs.fa" in the output directory
+# Output directory
+DIR=$3
 ASSEMBLY=$DIR/contigs.fa
 
-TMP_DIR=`mktemp -d`
+# Set up logging
+LOG=$DIR/log.txt
+exec > >(tee ${LOG})
+exec 2>&1
 
+TMP_DIR=$(mktemp -d)
 gunzip --to-stdout $READS > ${TMP_DIR}/reads.fq
 
-cat << EOF > $TMP_DIR/config
+CONFIG=$(mktemp)
+cat << EOF > ${CONFIG}
 max_rd_len=400
 [LIB]
 #average insert size
@@ -40,9 +40,16 @@ CPU=1
 
 cd $TMP_DIR
 
-KMER_CUT_OFF=10
+NAME=genome
 
-soapdenovo2-127mer all -p $CPU -d ${KMER_CUT_OFF} -o genome -s config 2> $LOG 1>&2
+# Determine which process to run
+PROC=$1
+CMD=$(egrep ^${PROC}: /Procfile | cut -f 2 -d ':')
 
+if [[ -z ${CMD} ]]; then
+  echo "Abort, no proc found for '${PROC}'."
+  exit 1
+fi
+eval ${CMD}
 
-mv genome.scafSeq $ASSEMBLY
+mv ${NAME}.scafSeq $ASSEMBLY

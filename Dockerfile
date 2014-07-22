@@ -3,6 +3,7 @@ MAINTAINER Michael Barton, mail@michaelbarton.me.uk
 
 RUN apt-get update -y
 RUN apt-get install -y soapdenovo2
-ADD run /usr/local/bin/
+ADD run /
+ADD Procfile /
 
-ENTRYPOINT ["/usr/local/bin/run"]
+ENTRYPOINT ["/run"]
